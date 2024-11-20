@@ -9,7 +9,5 @@ module Types
       "Hello World"
     end
 
-    field :login, mutation: Mutations::Login
-    field :sign_in, mutation: Mutations::SignInMutation
   end
 end
