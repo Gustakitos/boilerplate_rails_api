@@ -1,21 +1,23 @@
 name: CI
-
 on: [pull_request]
 
 jobs:
   setup:
-    uses: ./.github/workflows/jobs/setup.yml
+    name: Setup Env
+    uses: ./.github/workflows/setup.yml
     secrets:
       POSTGRES_STAGE: ${{ secrets.POSTGRES_STAGE }}
 
   database:
+    name: Setup Database
     needs: setup
-    uses: ./.github/workflows/jobs/database.yml
+    uses: ./.github/workflows/database.yml
     secrets:
       POSTGRES_STAGE: ${{ secrets.POSTGRES_STAGE }}
 
   tests:
+    name: Rspec tests
     needs: database
-    uses: ./.github/workflows/jobs/rspec.yml
+    uses: ./.github/workflows/rspec.yml
     secrets:
       POSTGRES_STAGE: ${{ secrets.POSTGRES_STAGE }}
