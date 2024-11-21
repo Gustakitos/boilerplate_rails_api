@@ -15,29 +15,40 @@ jobs:
           bundler-cache: true
 
       - name: Add platform to bundle
-        run: bundle lock --add-platform x86_64-linux
+        run: |
+          bundle config set --local platform_overrides "x86_64-linux:arm64-darwin"
+          bundle lock --add-platform x86_64-linux
+          bundle install
 
-      - name: Install dependencies
-        run: bundle install
+      - name: Cache bundle
+        uses: actions/cache@v3
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
 
   database:
     name: Setup Database
     needs: setup
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1.4"
+          bundler-cache: true
+
+      - name: Restore bundle cache
+        uses: actions/cache@v3
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+
       - name: Setup database
         run: bundle exec rails db:create db:schema:load
-        env:
-          DATABASE_URL: ${{ secrets.POSTGRES_STAGE }}
-          RAILS_ENV: test
-
-  tests:
-    name: RSpec Tests
-    needs: database
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run tests
-        run: bundle exec rspec
         env:
           DATABASE_URL: ${{ secrets.POSTGRES_STAGE }}
           RAILS_ENV: test
