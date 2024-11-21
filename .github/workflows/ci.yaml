@@ -14,19 +14,24 @@ jobs:
           ruby-version: "3.1.4"
           bundler-cache: true
 
-      - name: Add platform to bundle
+      - name: Configure bundle platforms
         run: |
           bundle config set --local platform_overrides "x86_64-linux:arm64-darwin"
           bundle lock --add-platform x86_64-linux
-          bundle install
 
       - name: Cache bundle
+        id: cache-bundle
         uses: actions/cache@v3
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-gems-
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path 'vendor/bundle'
+          bundle install
 
   database:
     name: Setup Database
@@ -41,11 +46,21 @@ jobs:
           ruby-version: "3.1.4"
           bundler-cache: true
 
+      - name: Configure bundle platforms
+        run: |
+          bundle config set --local platform_overrides "x86_64-linux:arm64-darwin"
+          bundle lock --add-platform x86_64-linux
+
       - name: Restore bundle cache
         uses: actions/cache@v3
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path 'vendor/bundle'
+          bundle install
 
       - name: Setup database
         run: bundle exec rails db:create db:schema:load
