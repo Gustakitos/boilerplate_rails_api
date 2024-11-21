@@ -4,20 +4,37 @@ on: [pull_request]
 jobs:
   setup:
     name: Setup Env
-    uses: ./.github/workflows/setup.yml
-    secrets:
-      POSTGRES_STAGE: ${{ secrets.POSTGRES_STAGE }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1.4"
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: bundle install
 
   database:
     name: Setup Database
     needs: setup
-    uses: ./.github/workflows/database.yml
-    secrets:
-      POSTGRES_STAGE: ${{ secrets.POSTGRES_STAGE }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup database
+        run: bundle exec rails db:create db:schema:load
+        env:
+          DATABASE_URL: ${{ secrets.POSTGRES_STAGE }}
+          RAILS_ENV: test
 
   tests:
-    name: Rspec tests
+    name: RSpec Tests
     needs: database
-    uses: ./.github/workflows/rspec.yml
-    secrets:
-      POSTGRES_STAGE: ${{ secrets.POSTGRES_STAGE }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests
+        run: bundle exec rspec
+        env:
+          DATABASE_URL: ${{ secrets.POSTGRES_STAGE }}
+          RAILS_ENV: test
