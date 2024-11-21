@@ -1,0 +1,22 @@
+name: Setup Environment
+
+on:
+  workflow_call:
+    secrets:
+      POSTGRES_STAGE:
+        required: true
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1.4"
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: bundle install
