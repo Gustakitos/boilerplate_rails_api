@@ -1,0 +1,69 @@
+name: CI
+on: [pull_request]
+
+jobs:
+  setup:
+    name: Setup Env
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1.4"
+          bundler-cache: true
+
+      - name: Configure bundle platforms
+        run: |
+          bundle config set --local platform_overrides "x86_64-linux:arm64-darwin"
+          bundle lock --add-platform x86_64-linux
+
+      - name: Cache bundle
+        id: cache-bundle
+        uses: actions/cache@v3
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path 'vendor/bundle'
+          bundle install
+
+  database:
+    name: Setup Database
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1.4"
+          bundler-cache: true
+
+      - name: Configure bundle platforms
+        run: |
+          bundle config set --local platform_overrides "x86_64-linux:arm64-darwin"
+          bundle lock --add-platform x86_64-linux
+
+      - name: Restore bundle cache
+        uses: actions/cache@v3
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path 'vendor/bundle'
+          bundle install
+
+      - name: Setup database
+        run: bundle exec rails db:create db:schema:load
+        env:
+          DATABASE_URL: ${{ secrets.POSTGRES_STAGE }}
+          RAILS_ENV: test
